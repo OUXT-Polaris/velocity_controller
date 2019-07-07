@@ -3,6 +3,7 @@
 
 /* Headers in ROS */
 #include <ros/ros.h>
+#include <std_msgs/Float32MultiArray.h>
 
 /* Headers in STL */
 #include <mutex>
@@ -19,16 +20,22 @@ public:
   void run();
   
 private:
+  /*instances*/
   ros::NodeHandle nh_, pnh_;
   ros::Subscriber targetvel_sub_;
   ros::Subscriber currentvel_sub_;
   ros::Publisher target_force_pub;
   std::mutex mtx_;
+
+  /*member variables*/
+  std_msgs::Float32MultiArray out_force_, target_vel_, current_vel_; /* [F_x, F_y, N_z] */
+
+  /*Constants*/
+  //PID Gain
+  const  float Kp_x;
   
-  std_msgs::Float32 pub_data_port_, pub_data_stbd_;
-  
-  void targetvel_sub_callback_(const sensor_msgs::Joy::ConstPtr msg);
-  void currentvel_sub_callback_(const sensor_msgs::Joy::ConstPtr msg);
+  void targetvel_sub_callback_(const std_msgg::Float32MultiArray msg);
+  void currentvel_sub_callback_(const std_msgg::Float32MultiArray msg);
   void update_force_();
   void publish_force_();
   
