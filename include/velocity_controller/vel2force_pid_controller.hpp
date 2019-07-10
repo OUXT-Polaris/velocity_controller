@@ -30,10 +30,14 @@ private:
   /*member variables*/
   std_msgs::Float32MultiArray out_force_, target_vel_, current_vel_; /* [F_x, F_y, N_z] */
 
-  /*Constants*/
-  //PID Gain
-  const  float Kp_x;
-  
+  //PID
+  std::vector<float> error_accumulation_; /*(u, v, r)*/
+  std::vector<int> error_min_; /*(u, v, r)*/
+  std::vector<float> pid_coef_p_; /*(u, v, r)*/
+  std::vector<float> pid_coef_i_; /*(u, v, r)*/
+  std::vector<float> pid_coef_d_; /*(u, v, r)*/
+
+  /*methods*/
   void targetvel_sub_callback_(const std_msgg::Float32MultiArray msg);
   void currentvel_sub_callback_(const std_msgg::Float32MultiArray msg);
   void update_force_();
