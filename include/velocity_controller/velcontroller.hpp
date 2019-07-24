@@ -26,21 +26,25 @@ private:
   ros::NodeHandle nh_, pnh_;
   ros::Subscriber targetvel_sub_;
   ros::Subscriber currentvel_sub_;
-  ros::Publisher thrustout_pub_;
+  ros::Publisher thrustout_pub_, thrustout_pub_;
   std::mutex mtx_;
 
   /*member variables*/
   double target_vel_[3], current_vel[3]; /*u, v, r*/
-  //geometry_msgs::Twist out_force_, /* [F_x, F_y, N_z] */
+  float leftmotor_cmd_, rightmotor_cmd_;
 
   //PID
-  //std::vector<int> error_min_; /*(u, v, r)*/
   double pid_coef_p_[3]; /*(u, v, r)*/
   double pid_coef_i_[3]; /*(u, v, r)*/
   double pid_coef_d_[3]; /*(u, v, r)*/
   double error_accum_[3]; /*(U, v, r)*/
   double error_limit_[3];
 
+  //Ship Coef.
+  const double l_ry; /*m*/
+  const double l_ly; /*m*/
+  const double thrust_max; /*kgf*/
+  
   /*methods*/
   void targetvel_sub_callback_(const geometry_msgs::Twist msg);
   void currentvel_sub_callback_(const geometry_msgs::Twist msg);
