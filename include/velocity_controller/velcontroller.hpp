@@ -6,6 +6,7 @@
 //#include <ros/common.h>　/*ROS_ASSERT()*/
 #include <std_msgs/Float32MultiArray.h>
 #include <geometry_msgs/Twist.h>
+#include <cmath.h>
 
 /* Headers in STL */
 #include <mutex>
