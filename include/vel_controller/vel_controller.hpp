@@ -3,7 +3,7 @@
 
 /* Headers in ROS */
 #include <ros/ros.h>
-#include <geometry_msgs/Twitst.h>
+#include <geometry_msgs/Twist.h>
 #include <std_msgs/Float32.h>
 
 /* Headers in STL */
@@ -38,16 +38,16 @@ private:
 	
 
 	/*Parameters*/
-	const float* Vctrl_max[]; /* [u, v, r] m/s : Max Speeds of the ship*/
-	const float* Tdiff_max[]; /* [u, v, r] % : Max gradient of Speeds*/
-	const float* Pgain[]; /* [u, v, r] m/s : Parameter of control gain (Proportional) */
+    float Vctrl_max[]; /* [u, v, r] m/s : Max Speeds of the ship*/
+	float Tdiff_max[]; /* [u, v, r] % : Max gradient of Speeds*/
+	float Pgain[]; /* [u, v, r] m/s : Parameter of control gain (Proportional) */
 	
 
 	/*methods*/
 	void subcb_veltarg(const geometry_msgs::Twist msg);
 	void subcb_velcurr(const geometry_msgs::Twist msg);
 	void update_thrust();
-	void pubiish_thrust();
+	void publish_thrust();
   
 };
 

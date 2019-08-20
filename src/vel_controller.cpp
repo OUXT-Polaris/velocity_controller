@@ -8,9 +8,9 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   Tbase_(0.0)
 {
   /*Init Constants*/
-  const float VelController::Vctrl_max[] = {10.0, 0.0, 5.0};
-  const float VelController::Tdiff_max[] = {0.1, 0.0, 0.1};
-  const float VelController::Pgain[] = {1.0, 1.0, 1.0};
+  const float Vctrl_max[] = {10.0, 0.0, 5.0};
+  const float Tdiff_max[] = {0.1, 0.0, 0.1};
+  const float Pgain[] = {1.0, 1.0, 1.0};
   
   /* Read ROS Param */
   std::string topicname_sub_veltarg = "vel_targ";
@@ -19,20 +19,20 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   std::string topicname_pub_thrust_right = "thrust_right";
   
   /*Attach Subscriber callback*/
-  sub_veltarg_ = nh_.subscribe(topicname_veltarg, 100, &VelController::subcb_veltarg, this);
-  sub_velcurr_ = nh_.subscribe(topicname_velcurr, 100, &VelController::subcb_velcurr, this);
+  sub_veltarg_ = nh_.subscribe(topicname_sub_veltarg, 100, &VelController::subcb_veltarg, this);
+  sub_velcurr_ = nh_.subscribe(topicname_sub_velcurr, 100, &VelController::subcb_velcurr, this);
   
   /*attach Publisher*/
   thrust_left_pub_ = pnh_.advertise<std_msgs::Float32>(topicname_pub_thrust_left, 100);
   thrust_right_pub_ = pnh_.advertise<std_msgs::Float32>(topicname_pub_thrust_right, 100);
 }
 
-VelController::~VelController():
+VelController::~VelController()
 {
-  
+
 }
 
-VelController::run()
+void VelController::run()
 {
   ros::Rate rate(100);
   
@@ -44,8 +44,6 @@ VelController::run()
   }
   
 }
-
-
 
 
 void VelController::subcb_veltarg(const geometry_msgs::Twist msg)
@@ -87,7 +85,7 @@ void VelController::update_thrust()
 	/* -2- Normalize Vdiff */
 	for(cnt=0; cnt<3; cnt++)
 	{
-		Vdiff_idx[cnt] = Vdiff_[cnt] / Vctrl_max[cnt];
+		Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
 		
 		if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
 		{
@@ -108,8 +106,8 @@ void VelController::update_thrust()
 
 	
 	/* -4- Calculate Differential Thrust */
-	T_Left = Tbase + Pgain[2] * (Vdiff_idx[2] / 2);
-	T_Right = Tbase - Pgain[2] * (Vdiff_idx[2] / 2);
+	T_Left = Tbase_ + Pgain[2] * (Vdiff_idx[2] / 2);
+	T_Right = Tbase_ - Pgain[2] * (Vdiff_idx[2] / 2);
 
 	
 	/* -5- Adjust to Maximum Thrust */
@@ -133,12 +131,12 @@ void VelController::update_thrust()
 	mtx_.lock();
 	thrust_left.data = T_Left;
 	thrust_right.data = T_Right;
-	mtx_unlock();
+	mtx_.unlock();
 		
 }
 
 
-void VelController::publish_thrust_()
+void VelController::publish_thrust()
 {
 	mtx_.lock();
 	thrust_left_pub_.publish(thrust_left);
