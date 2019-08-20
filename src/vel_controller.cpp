@@ -35,11 +35,12 @@ VelController::~VelController()
 void VelController::run()
 {
   ros::Rate rate(100);
-  
+
   while(ros::ok())
   {		
 	update_thrust();
 	publish_thrust();
+	indicate_cmdline();
 	rate.sleep();
   }
   
@@ -142,4 +143,14 @@ void VelController::publish_thrust()
 	thrust_left_pub_.publish(thrust_left);
 	thrust_right_pub_.publish(thrust_right);	
 	mtx_.unlock();
+}
+
+
+void VelController::indicate_cmdline()
+{
+
+  printf("[Target]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", veltarg_[0], veltarg_[1], veltarg_[2]);
+  printf("[Current]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", velcurr_[0], velcurr_[1], velcurr_[2]);
+  printf("[Control]:\tPORT:%.1f%%\t\tSTBD:%.1f%%\n", thrust_left.data, thrust_right.data);
+  printf("\n");
 }

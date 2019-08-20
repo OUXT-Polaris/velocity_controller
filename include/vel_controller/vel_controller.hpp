@@ -48,6 +48,7 @@ private:
 	void subcb_velcurr(const geometry_msgs::Twist msg);
 	void update_thrust();
 	void publish_thrust();
+    void indicate_cmdline();
   
 };
 
