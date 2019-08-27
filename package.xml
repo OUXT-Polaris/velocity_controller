@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>velocity_controller</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>The velocity controller package</description>
 
   <maintainer email="robotx@osakaweb.jp">JadeEtoile</maintainer>
@@ -12,12 +12,15 @@
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
+  <build_depend>usv_control_msgs</build_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>usv_control_msgs</build_export_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>usv_control_msgs</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

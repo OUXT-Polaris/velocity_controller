@@ -4,7 +4,7 @@
 /* Headers in ROS */
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
-#include <std_msgs/Float32.h>
+#include <usv_control_msgs/AzimuthThrusterCatamaranDriveStamped.h>
 
 /* Headers in STL */
 #include <mutex>
@@ -16,7 +16,7 @@ class VelController
 {
   
 public:
-	VelController(ros::NodeHandle nh, ros::NodeHandle pnh);/*Constructor*/
+    VelController(ros::NodeHandle nh, ros::NodeHandle pnh);/*Constructor*/
 	~VelController();	/*Destructor*/
 	void run();	/*Start program*/
   
@@ -25,22 +25,23 @@ private:
 	ros::NodeHandle nh_, pnh_;
 	ros::Subscriber sub_veltarg_;
 	ros::Subscriber sub_velcurr_;
-	ros::Publisher thrust_left_pub_;
-	ros::Publisher thrust_right_pub_;
+	ros::Publisher thrust_pub_;
 	std::mutex mtx_;
 	
 	/*Member Variables*/
-	float veltarg_[3]; /* [u, v, r] m/s*/
-	float velcurr_[3]; /* [u, v, r] m/s*/
-	float Tbase_;
-	std_msgs::Float32 thrust_left;
-	std_msgs::Float32 thrust_right;
-	
+    float veltarg_[3]; /* [u, v, r] m/s*/
+    float velcurr_[3]; /* [u, v, r] m/s*/
+    float Tbase_;
+    usv_control_msgs::AzimuthThrusterCatamaranDriveStamped thrust_cmd;
 
 	/*Parameters*/
+    std::string topicname_sub_veltarg;
+    std::string topicname_sub_velcurr;
+    std::string topicname_pub_thrust;
     float Vctrl_max[]; /* [u, v, r] m/s : Max Speeds of the ship*/
 	float Tdiff_max[]; /* [u, v, r] % : Max gradient of Speeds*/
 	float Pgain[]; /* [u, v, r] m/s : Parameter of control gain (Proportional) */
+
 	
 
 	/*methods*/

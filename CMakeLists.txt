@@ -7,12 +7,13 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   geometry_msgs
+  usv_control_msgs
 )
 
 catkin_package(
   INCLUDE_DIRS include
-#  LIBRARIES vrx_joystick
-  CATKIN_DEPENDS roscpp std_msgs geometry_msgs
+#  LIBRARIES velcontroller
+  CATKIN_DEPENDS roscpp std_msgs geometry_msgs usv_control_msgs
 #  DEPENDS system_lib
 )
 
@@ -23,3 +24,4 @@ include_directories(
 
 add_executable(vel_controller_node src/vel_controller.cpp src/vel_controller_node.cpp)
 target_link_libraries(vel_controller_node ${catkin_LIBRARIES})
+add_dependencies(vel_controller_node usv_control_msgs_generate_messages_cpp)
