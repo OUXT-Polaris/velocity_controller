@@ -7,12 +7,23 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   pnh_(pnh),
   Tbase_(0.0)
 {
-  /*Init Constants*/
-  const float Vctrl_max[] = {10.0, 0.0, 5.0};
-  const float Tdiff_max[] = {0.1, 0.0, 0.1};
-  const float Pgain[] = {1.0, 1.0, 1.0};
+  int cnt = 0;
   
-  /* Read ROS Param */
+  /*Init Variables*/
+  thrust_cmd.command.left_thrust_cmd = 0.0;
+  thrust_cmd.command.right_thrust_cmd = 0.0;
+  for(cnt=0; cnt<3; cnt++)
+  {
+	veltarg_[cnt] = 0.0;
+	velcurr_[cnt] = 0.0;
+  }
+  
+  /*Init Constants*/
+  const double Vctrl_max[] = {10.0, 0.0, 5.0};
+  const double Tdiff_max[] = {0.1, 0.0, 0.1};
+  const double Pgain[] = {1.0, 1.0, 1.0};
+  
+  /* Create ROS Param */
   pnh_.param<std::string>("target_velocity", topicname_sub_veltarg, "/target_velocity");
   pnh_.param<std::string>("current_velocity", topicname_sub_velcurr, "/pose_to_twist/current_twist");
   pnh_.param<std::string>("thrust_command", topicname_pub_thrust, "/control_command");
@@ -22,7 +33,7 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   sub_velcurr_ = nh_.subscribe(topicname_sub_velcurr, 100, &VelController::subcb_velcurr, this);
   
   /*attach Publisher*/
-  thrust_pub_ = pnh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(topicname_pub_thrust, 100);
+  thrust_pub_ = nh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(topicname_pub_thrust, 100);
 }
 
 VelController::~VelController()
@@ -38,40 +49,42 @@ void VelController::run()
   {		
 	update_thrust();
 	publish_thrust();
-	indicate_cmdline();
+	//indicate_cmdline();
 	rate.sleep();
   }
   
 }
 
 
-void VelController::subcb_veltarg(const geometry_msgs::Twist msg)
+void VelController::subcb_veltarg(const geometry_msgs::Twist::ConstPtr msg)
 {
 	mtx_.lock();
-	veltarg_[0] = msg.linear.y;
-	veltarg_[1] = msg.linear.x;
-	veltarg_[2] = msg.angular.z;
+	veltarg_[0] = msg->linear.y;
+	veltarg_[1] = msg->linear.x;
+	veltarg_[2] = msg->angular.z;
+	ROS_INFO("%lf", veltarg_[0]);
 	mtx_.unlock();
+
 }
 
-void VelController::subcb_velcurr(const geometry_msgs::Twist msg)
+void VelController::subcb_velcurr(const geometry_msgs::Twist::ConstPtr msg)
 {
 	mtx_.lock();
-	velcurr_[0] = msg.linear.y;
-	velcurr_[1] = msg.linear.x;
-	velcurr_[2] = msg.angular.z;
+	velcurr_[0] = msg->linear.y;
+	velcurr_[1] = msg->linear.x;
+	velcurr_[2] = msg->angular.z;
 	mtx_.unlock();
 }
 
 void VelController::update_thrust()
 {
 	int cnt = 0;
-	float Vdiff[3] = {0.0, 0.0, 0.0}; /*u, v, r*/
-	float Vdiff_idx[3] = {0.0, 0.0, 0.0};
-	float T_Left = 0.0;
-	float T_Right = 0.0;
-	float T_Left_abs = 0.0;
-	float T_Right_abs = 0.0;
+	double Vdiff[3] = {0.0, 0.0, 0.0}; /*u, v, r*/
+	double Vdiff_idx[3] = {0.0, 0.0, 0.0};
+	double T_Left = 0.0;
+	double T_Right = 0.0;
+	double T_Left_abs = 0.0;
+	double T_Right_abs = 0.0;
 
 	/* -1- Getting Current Velocity Status */
 	mtx_.lock();
@@ -81,10 +94,12 @@ void VelController::update_thrust()
 	}
 	mtx_.unlock();
 
+
 	/* -2- Normalize Vdiff */
 	for(cnt=0; cnt<3; cnt++)
 	{
 		Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
+
 		
 		if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
 		{
@@ -98,6 +113,7 @@ void VelController::update_thrust()
 		{
 			/*** DO NOTHING ***/
 		}
+		//ROS_INFO("%lf", Vdiff_idx[cnt]);
 	}
 
 	/* -3- Calculate Base Thrust */
@@ -147,6 +163,6 @@ void VelController::indicate_cmdline()
 {
   printf("[Target]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", veltarg_[0], veltarg_[1], veltarg_[2]);
   printf("[Current]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", velcurr_[0], velcurr_[1], velcurr_[2]);
-  printf("[Control]:\tPORT:%.1f%%\t\tSTBD:%.1f%%\n", thrust_cmd.command.left_thrust_cmd, thrust_cmd.command.right_thrust_cmd);
+  printf("[Control]:\tPORT:%.1f%%\t\tSTBD:%.1f%%\n", thrust_cmd.command.left_thrust_cmd*100, thrust_cmd.command.right_thrust_cmd*100);
   printf("\n");
 }
