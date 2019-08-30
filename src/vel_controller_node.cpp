@@ -6,11 +6,11 @@
 
 int main(int argc, char *argv[])
 {
-    ros::init(argc, argv, "vel_controller_node");
-    ros::NodeHandle nh;
-	ros::NodeHandle pnh("~");
-    VelController controller(nh, pnh);
-	controller.run();
-	
-    return 0;
+  ros::init(argc, argv, "vel_controller_node");
+  ros::NodeHandle nh;
+  ros::NodeHandle pnh("~");
+  VelController controller(nh, pnh);
+  controller.run();
+  
+  return 0;
 }
