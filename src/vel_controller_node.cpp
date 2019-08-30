@@ -11,7 +11,6 @@ int main(int argc, char *argv[])
 	ros::NodeHandle pnh("~");
     VelController controller(nh, pnh);
 	controller.run();
-    ros::spin();
 	
     return 0;
 }

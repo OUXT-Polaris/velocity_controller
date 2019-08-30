@@ -8,7 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   usv_control_msgs
-)
+  dynamic_reconfigure
+  )
+
+###Dynamic Reconfigure###
+generate_dynamic_reconfigure_options(cfg/velocity_controller_constants.cfg)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -24,4 +28,4 @@ include_directories(
 
 add_executable(vel_controller_node src/vel_controller.cpp src/vel_controller_node.cpp)
 target_link_libraries(vel_controller_node ${catkin_LIBRARIES})
-add_dependencies(vel_controller_node usv_control_msgs_generate_messages_cpp)
+add_dependencies(vel_controller_node usv_control_msgs_generate_messages_cpp velocity_controller_gencfg)
