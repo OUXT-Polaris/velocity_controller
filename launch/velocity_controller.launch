@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="target_velocity_topic" default="/target_velocity"/>
+    <arg name="control_command_topic" default="/control_command"/>
+    <arg name="current_velocity_topic" default="/pose_to_twist/current_twist"/>
+
+    <node pkg="velocity_controller" type="vel_controller_node" name="velocity_controller_node" output="log" respawn="false" respawn_delay="0">
+        <param name="target_velocity" value="$(arg target_velocity_topic)"/>
+        <param name="thrust_command" value="$(arg control_command_topic)"/>
+        <param name="current_velocity" value="$(arg current_velocity_topic)"/>
+    </node>
+</launch>

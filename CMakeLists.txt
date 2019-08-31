@@ -28,4 +28,9 @@ include_directories(
 
 add_executable(vel_controller_node src/vel_controller.cpp src/vel_controller_node.cpp)
 target_link_libraries(vel_controller_node ${catkin_LIBRARIES})
-add_dependencies(vel_controller_node usv_control_msgs_generate_messages_cpp velocity_controller_gencfg)
+add_dependencies(vel_controller_node ${catkin_EXPORTED_TARGETS})
+
+foreach(dir launch)
+  install(DIRECTORY ${dir}/
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach(dir)
