@@ -76,7 +76,7 @@ void VelController::subcb_velcurr(const geometry_msgs::Twist::ConstPtr msg)
   mtx_.unlock();
 }
 
-void VelController::reconf_cbfunc(velocity_controller::ControlConstConfig &config, unsigned int level)
+void VelController::reconf_cbfunc(velocity_controller::ControlConstConfig &config, uint32_t level)
 {
   mtx_.lock();
   Vctrl_max_[0] = config.VctrlMax_X;

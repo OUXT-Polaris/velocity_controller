@@ -46,12 +46,10 @@ private:
   std::string topicname_sub_velcurr;
   std::string topicname_pub_thrust;
   
-  
-  
   /*methods*/
   void subcb_veltarg(const geometry_msgs::Twist::ConstPtr msg);
   void subcb_velcurr(const geometry_msgs::Twist::ConstPtr msg);
-  void reconf_cbfunc(velocity_controller::ControlConstConfig &config, unsigned int level);
+  void reconf_cbfunc(velocity_controller::ControlConstConfig &config, uint32_t level);
   void update_thrust();
   void publish_thrust();
   void indicate_cmdline();
