@@ -31,8 +31,8 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   thrust_pub_ = nh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(topicname_pub_thrust, 100);
   
   /*Attach Reconfigure Server*/
-  reconfcb_ = boost::bind(&VelController::reconf_cbfunc, _1, _2);
-  reconfserv_.setCallback(reconfcb_);
+  boost::bind(reconfcbptr_, &VelController::reconf_cbfunc, _1, _2);
+  reconfserv_.setCallback(reconfcbptr_);
 }
   
 

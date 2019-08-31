@@ -28,7 +28,7 @@ private:
   ros::Subscriber sub_velcurr_;
   ros::Publisher thrust_pub_;
   dynamic_reconfigure::Server<velocity_controller::ControlConstConfig> reconfserv_;
-  dynamic_reconfigure::Server<velocity_controller::ControlConstConfig>::CallbackType reconfcb_;
+  dynamic_reconfigure::Server<velocity_controller::ControlConstConfig>::CallbackType reconfcbptr_;
   std::mutex mtx_;
   
   
