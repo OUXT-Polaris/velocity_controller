@@ -30,6 +30,13 @@ add_executable(vel_controller_node src/vel_controller.cpp src/vel_controller_nod
 target_link_libraries(vel_controller_node ${catkin_LIBRARIES})
 add_dependencies(vel_controller_node ${catkin_EXPORTED_TARGETS})
 
+install(TARGETS
+  vel_controller_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 foreach(dir launch)
   install(DIRECTORY ${dir}/
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
