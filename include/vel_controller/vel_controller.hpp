@@ -3,7 +3,7 @@
 
 /* Headers in ROS */
 #include <ros/ros.h>
-#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <usv_control_msgs/AzimuthThrusterCatamaranDriveStamped.h>
 #include <dynamic_reconfigure/server.h>
 #include <velocity_controller/ControlConstConfig.h>
@@ -45,10 +45,11 @@ private:
   std::string topicname_sub_veltarg;
   std::string topicname_sub_velcurr;
   std::string topicname_pub_thrust;
+  std::string robot_frame_;
   
   /*methods*/
-  void subcb_veltarg(const geometry_msgs::Twist::ConstPtr msg);
-  void subcb_velcurr(const geometry_msgs::Twist::ConstPtr msg);
+  void subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr msg);
+  void subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr msg);
   void reconf_cbfunc(velocity_controller::ControlConstConfig &config, uint32_t level);
   void update_thrust();
   void publish_thrust();

@@ -22,6 +22,7 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   pnh_.param<std::string>("target_velocity", topicname_sub_veltarg, "/target_velocity");
   pnh_.param<std::string>("current_velocity", topicname_sub_velcurr, "/pose_to_twist/current_twist");
   pnh_.param<std::string>("thrust_command", topicname_pub_thrust, "/control_command");
+  pnh_.param<std::string>("robot_frame", robot_frame_, "base_link");
   
   /*Attach Subscriber callback*/
   sub_veltarg_ = nh_.subscribe(topicname_sub_veltarg, 100, &VelController::subcb_veltarg, this);
@@ -57,22 +58,22 @@ void VelController::run()
  }
 
 
-void VelController::subcb_veltarg(const geometry_msgs::Twist::ConstPtr msg)
+void VelController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
-  veltarg_[0] = msg->linear.y;
-  veltarg_[1] = msg->linear.x;
-  veltarg_[2] = msg->angular.z;
+  veltarg_[0] = msg->twist.linear.y;
+  veltarg_[1] = msg->twist.linear.x;
+  veltarg_[2] = msg->twist.angular.z;
   mtx_.unlock();
   
 }
 
-void VelController::subcb_velcurr(const geometry_msgs::Twist::ConstPtr msg)
+void VelController::subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
-  velcurr_[0] = msg->linear.y;
-  velcurr_[1] = msg->linear.x;
-  velcurr_[2] = msg->angular.z;
+  velcurr_[0] = msg->twist.linear.y;
+  velcurr_[1] = msg->twist.linear.x;
+  velcurr_[2] = msg->twist.angular.z;
   mtx_.unlock();
 }
 
@@ -178,6 +179,8 @@ void VelController::update_thrust()
 void VelController::publish_thrust()
 {
   mtx_.lock();
+  thrust_cmd.header.frame_id = robot_frame_;
+  thrust_cmd.header.stamp = ros::Time::now();
   thrust_pub_.publish(thrust_cmd);
   mtx_.unlock();
 }
@@ -185,8 +188,8 @@ void VelController::publish_thrust()
 
 void VelController::indicate_cmdline()
 {
-  printf("[Target]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", veltarg_[0], veltarg_[1], veltarg_[2]);
-  printf("[Current]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", velcurr_[0], velcurr_[1], velcurr_[2]);
-  printf("[Control]:\tPORT:%.1f%%\t\tSTBD:%.1f%%\n", thrust_cmd.command.left_thrust_cmd*100, thrust_cmd.command.right_thrust_cmd*100);
-  printf("\n");
+  ROS_INFO("[Target]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", veltarg_[0], veltarg_[1], veltarg_[2]);
+  ROS_INFO("[Current]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", velcurr_[0], velcurr_[1], velcurr_[2]);
+  ROS_INFO("[Control]:\tPORT:%.1f%%\t\tSTBD:%.1f%%\n", thrust_cmd.command.left_thrust_cmd*100, thrust_cmd.command.right_thrust_cmd*100);
+  ROS_INFO("\n");
 }
