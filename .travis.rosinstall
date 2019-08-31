@@ -1,4 +1,4 @@
 - git:
     local-name: usv_control_msgs
     uri: https://github.com/OUXT-Polaris/usv_control_msgs.git
-    version: mast
+    version: master
