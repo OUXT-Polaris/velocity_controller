@@ -123,14 +123,12 @@ void VelController::update_thrust()
 	Vdiff[cnt] = veltarg_[cnt] - velcurr_[cnt];
   }
   mtx_.unlock();
-  
+  ROS_INFO("Vel-DEV  X:%.3lf  Y:%.3lf  YAW:%.3lf", Vdiff[0], Vdiff[1], Vdiff[2]);
   
   /* -2- Normalize Vdiff */
   for(cnt=0; cnt<3; cnt++)
   {
 	Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
-	ROS_INFO("%lf, %d", Vdiff_idx[cnt], cnt);
-
 	
 	if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
 	{
@@ -145,14 +143,28 @@ void VelController::update_thrust()
 	  /*** DO NOTHING ***/
 	}
   }
+  ROS_INFO("Vel-DEV(STD,CAP)  X:%.3lf  Y:%.3lf  YAW:%.3lf", Vdiff_idx[0], Vdiff_idx[1], Vdiff_idx[2]);
 
   /* -3- Calculate Base Thrust */
   Tbase_ =  Tbase_ + Pgain[0] * Vdiff_idx[0];
-
+  if(Tbase_ > 1.0)
+  {
+	Tbase_ = 1.0;
+  }
+  else if(Tbase_ < -1.0)
+  {
+	Tbase_ = -1.0;
+  }
+  else
+  {
+	/*DO NOTHING*/
+  }
+  ROS_INFO("Base Thrust: %.3lf", Tbase_);
 	
   /* -4- Calculate Differential Thrust */
   T_Left = Tbase_ + Pgain[2] * (Vdiff_idx[2] / 2);
   T_Right = Tbase_ - Pgain[2] * (Vdiff_idx[2] / 2);
+  ROS_INFO("Thrust(RAW): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
   
   
   /* -5- Adjust to Maximum Thrust */
@@ -172,6 +184,7 @@ void VelController::update_thrust()
 	  T_Right = 1.0;
 	}
   }
+  ROS_INFO("Thrust(FINAL): [LEFT]%.3lf, [RIGHT]%.3lf\n", T_Left, T_Right);
   
   mtx_.lock();
   thrust_cmd.command.left_thrust_cmd = T_Left;
