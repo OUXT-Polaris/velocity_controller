@@ -115,7 +115,6 @@ void VelController::update_thrust()
 	Pgain[cnt] = Pgain_[cnt];
   }
   mtx_.unlock();
-  ROS_INFO("%lf, %lf, %lf", Vctrl_max[0], Vctrl_max[1], Vctrl_max[2]);
   
   /* -1- Getting Current Velocity Status */
   mtx_.lock();
@@ -130,6 +129,7 @@ void VelController::update_thrust()
   for(cnt=0; cnt<3; cnt++)
   {
 	Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
+	ROS_INFO("%lf, %d", Vdiff_idx[cnt], cnt);
 
 	
 	if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
