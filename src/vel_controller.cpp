@@ -32,7 +32,7 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   thrust_pub_ = nh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(topicname_pub_thrust, 100);
   
   /*Attach Reconfigure Server*/
-  boost::bind(reconfcbptr_, &VelController::reconf_cbfunc, _1, _2);
+  reconfcbptr_ = boost::bind(&VelController::reconf_cbfunc, this, _1, _2);
   reconfserv_.setCallback(reconfcbptr_);
 }
   
@@ -103,12 +103,19 @@ void VelController::update_thrust()
   double T_Right = 0.0;
   double T_Left_abs = 0.0;
   double T_Right_abs = 0.0;
+  double Vctrl_max[3];
+  double Tdiff_max[3];
+  double Pgain[3];
   
   mtx_.lock();
-  double Vctrl_max[3] = {Vctrl_max_[0], Vctrl_max_[1], Vctrl_max_[2]};
-  double Tdiff_max[3] = {Tdiff_max_[0], Tdiff_max_[1], Tdiff_max_[2]};
-  double Pgain[3] = {Pgain_[0], Pgain_[1], Pgain_[2]};
+  for(cnt=0; cnt<3; cnt++)
+  {
+	Vctrl_max[cnt] = Vctrl_max_[cnt];
+	Tdiff_max[cnt] = Tdiff_max_[cnt];
+	Pgain[cnt] = Pgain_[cnt];
+  }
   mtx_.unlock();
+  ROS_INFO("%lf, %lf, %lf", Vctrl_max[0], Vctrl_max[1], Vctrl_max[2]);
   
   /* -1- Getting Current Velocity Status */
   mtx_.lock();
@@ -123,7 +130,7 @@ void VelController::update_thrust()
   for(cnt=0; cnt<3; cnt++)
   {
 	Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
-	ROS_INFO("%lf: %d", Vdiff_idx[cnt], cnt);
+
 	
 	if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
 	{
@@ -137,9 +144,7 @@ void VelController::update_thrust()
 	{
 	  /*** DO NOTHING ***/
 	}
-	//ROS_INFO("%lf", Vdiff_idx[cnt]);
   }
-  ROS_INFO("\n");
 
   /* -3- Calculate Base Thrust */
   Tbase_ =  Tbase_ + Pgain[0] * Vdiff_idx[0];
