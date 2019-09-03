@@ -143,7 +143,7 @@ void VelController::update_thrust()
 	  /*** DO NOTHING ***/
 	}
   }
-  ROS_INFO("Vel-DEV(STD,CAP)  X:%.3lf  Y:%.3lf  YAW:%.3lf", Vdiff_idx[0], Vdiff_idx[1], Vdiff_idx[2]);
+  ROS_INFO("Vel-DEV(STD,CAP)  X:%.6lf  Y:%.6lf  YAW:%.6lf", Vdiff_idx[0], Vdiff_idx[1], Vdiff_idx[2]);
 
   /* -3- Calculate Base Thrust */
   Tbase_ =  Tbase_ + Pgain[0] * Vdiff_idx[0];
@@ -171,7 +171,7 @@ void VelController::update_thrust()
   T_Left_abs = std::abs(T_Left);
   T_Right_abs = std::abs(T_Right);
   
-  if( T_Left_abs * T_Right_abs > 1.0 )
+  if( T_Left_abs >1.0 || T_Right_abs > 1.0 )
   {
 	if( T_Left_abs > T_Right_abs )
 	{
