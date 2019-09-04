@@ -1,8 +1,8 @@
 // Headers in this package
-#include <vel_controller/vel_controller.hpp>
+#include <velocity_controller/velocity_controller.hpp>
 #include <boost/bind.hpp>
 
-VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
+VelocityController::VelocityController(ros::NodeHandle nh, ros::NodeHandle pnh):
   nh_(nh),
   pnh_(pnh)
 {
@@ -25,24 +25,24 @@ VelController::VelController(ros::NodeHandle nh, ros::NodeHandle pnh):
   pnh_.param<std::string>("robot_frame", robot_frame_, "base_link");
   
   /*Attach Subscriber callback*/
-  sub_veltarg_ = nh_.subscribe(topicname_sub_veltarg, 100, &VelController::subcb_veltarg, this);
-  sub_velcurr_ = nh_.subscribe(topicname_sub_velcurr, 100, &VelController::subcb_velcurr, this);
+  sub_veltarg_ = nh_.subscribe(topicname_sub_veltarg, 100, &VelocityController::subcb_veltarg, this);
+  sub_velcurr_ = nh_.subscribe(topicname_sub_velcurr, 100, &VelocityController::subcb_velcurr, this);
   
   /*Attach Publisher*/
   thrust_pub_ = nh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(topicname_pub_thrust, 100);
   
   /*Attach Reconfigure Server*/
-  reconfcbptr_ = boost::bind(&VelController::reconf_cbfunc, this, _1, _2);
+  reconfcbptr_ = boost::bind(&VelocityController::reconf_cbfunc, this, _1, _2);
   reconfserv_.setCallback(reconfcbptr_);
 }
   
 
-VelController::~VelController()
+VelocityController::~VelocityController()
 {
   
 }
 
-void VelController::run()
+void VelocityController::run()
 {
   ros::Rate rate(100);
   
@@ -50,7 +50,6 @@ void VelController::run()
 	{		
 	  update_thrust();
 	  publish_thrust();
-	  //indicate_cmdline();
 	  ros::spinOnce();
 	  rate.sleep();
 	}
@@ -58,7 +57,7 @@ void VelController::run()
  }
 
 
-void VelController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr msg)
+void VelocityController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
   veltarg_[0] = msg->twist.linear.y;
@@ -68,7 +67,7 @@ void VelController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr ms
   
 }
 
-void VelController::subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr msg)
+void VelocityController::subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
   velcurr_[0] = msg->twist.linear.y;
@@ -77,7 +76,7 @@ void VelController::subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr ms
   mtx_.unlock();
 }
 
-void VelController::reconf_cbfunc(velocity_controller::ControlConstConfig &config, uint32_t level)
+void VelocityController::reconf_cbfunc(velocity_controller::ControlParamConfig &config, uint32_t level)
 {
   mtx_.lock();
   Vctrl_max_[0] = config.VctrlMax_X;
@@ -94,7 +93,7 @@ void VelController::reconf_cbfunc(velocity_controller::ControlConstConfig &confi
   mtx_.unlock();
 }
 
-void VelController::update_thrust()
+void VelocityController::update_thrust()
 {
   int cnt = 0;
   double Vdiff[3] = {0.0, 0.0, 0.0}; /*u, v, r*/
@@ -129,7 +128,7 @@ void VelController::update_thrust()
   for(cnt=0; cnt<3; cnt++)
   {
 	Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
-	
+	ROS_INFO("Vel-DEVIDX  X:%.3lf", Vdiff_idx[cnt]);	
 	if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
 	{
 	  Vdiff_idx[cnt] = Tdiff_max[cnt];
@@ -194,20 +193,11 @@ void VelController::update_thrust()
 }
 
 
-void VelController::publish_thrust()
+void VelocityController::publish_thrust()
 {
   mtx_.lock();
   thrust_cmd.header.frame_id = robot_frame_;
   thrust_cmd.header.stamp = ros::Time::now();
   thrust_pub_.publish(thrust_cmd);
   mtx_.unlock();
-}
-
-
-void VelController::indicate_cmdline()
-{
-  ROS_INFO("[Target]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", veltarg_[0], veltarg_[1], veltarg_[2]);
-  ROS_INFO("[Current]:\tX:%.1fm/s\t\tY:%.1fm/s\t\tR:%.1frad/s\n", velcurr_[0], velcurr_[1], velcurr_[2]);
-  ROS_INFO("[Control]:\tPORT:%.1f%%\t\tSTBD:%.1f%%\n", thrust_cmd.command.left_thrust_cmd*100, thrust_cmd.command.right_thrust_cmd*100);
-  ROS_INFO("\n");
 }
