@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   )
 
 ###Dynamic Reconfigure###
-generate_dynamic_reconfigure_options(cfg/velocity_controller_cofigure.cfg)
+generate_dynamic_reconfigure_options(cfg/velocity_controller_configure.cfg)
 
 catkin_package(
   INCLUDE_DIRS include

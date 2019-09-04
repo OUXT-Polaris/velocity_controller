@@ -13,23 +13,23 @@ VelocityController::VelocityController(ros::NodeHandle nh, ros::NodeHandle pnh):
   thrust_cmd.command.right_thrust_cmd = 0.0;
   for(cnt=0; cnt<3; cnt++)
 	{
-	  veltarg_[cnt] = 0.0;
-	  velcurr_[cnt] = 0.0;
+	  target_velocity_[cnt] = 0.0;
+	  current_velocity_[cnt] = 0.0;
 	}
-  Tbase_ = 0.0;
+  base_thrust_ = 0.0;
   
   /* Create ROS Param */
-  pnh_.param<std::string>("target_velocity", topicname_sub_veltarg, "/target_velocity");
-  pnh_.param<std::string>("current_velocity", topicname_sub_velcurr, "/pose_to_twist/current_twist");
-  pnh_.param<std::string>("thrust_command", topicname_pub_thrust, "/control_command");
+  pnh_.param<std::string>("target_velocity", sub_topicname_target_velocity_, "/target_velocity");
+  pnh_.param<std::string>("current_velocity", sub_topicname_current_velocity_, "/pose_to_twist/current_twist");
+  pnh_.param<std::string>("thrust_command", pub_topicname_thrust_, "/control_command");
   pnh_.param<std::string>("robot_frame", robot_frame_, "base_link");
   
   /*Attach Subscriber callback*/
-  sub_veltarg_ = nh_.subscribe(topicname_sub_veltarg, 100, &VelocityController::subcb_veltarg, this);
-  sub_velcurr_ = nh_.subscribe(topicname_sub_velcurr, 100, &VelocityController::subcb_velcurr, this);
+  sub_target_velocity_ = nh_.subscribe(sub_topicname_target_velocity_, 100, &VelocityController::subcb_veltarg, this);
+  sub_current_velocity_ = nh_.subscribe(sub_topicname_current_velocity_, 100, &VelocityController::subcb_velcurr, this);
   
   /*Attach Publisher*/
-  thrust_pub_ = nh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(topicname_pub_thrust, 100);
+  thrust_pub_ = nh_.advertise<usv_control_msgs::AzimuthThrusterCatamaranDriveStamped>(pub_topicname_thrust_, 100);
   
   /*Attach Reconfigure Server*/
   reconfcbptr_ = boost::bind(&VelocityController::reconf_cbfunc, this, _1, _2);
@@ -60,9 +60,9 @@ void VelocityController::run()
 void VelocityController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
-  veltarg_[0] = msg->twist.linear.y;
-  veltarg_[1] = msg->twist.linear.x;
-  veltarg_[2] = msg->twist.angular.z;
+  target_velocity_[0] = msg->twist.linear.y;
+  target_velocity_[1] = msg->twist.linear.x;
+  target_velocity_[2] = msg->twist.angular.z;
   mtx_.unlock();
   
 }
@@ -70,26 +70,26 @@ void VelocityController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstP
 void VelocityController::subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
-  velcurr_[0] = msg->twist.linear.y;
-  velcurr_[1] = msg->twist.linear.x;
-  velcurr_[2] = msg->twist.angular.z;
+  current_velocity_[0] = msg->twist.linear.y;
+  current_velocity_[1] = msg->twist.linear.x;
+  current_velocity_[2] = msg->twist.angular.z;
   mtx_.unlock();
 }
 
 void VelocityController::reconf_cbfunc(velocity_controller::ControlParamConfig &config, uint32_t level)
 {
   mtx_.lock();
-  Vctrl_max_[0] = config.VctrlMax_X;
-  Vctrl_max_[1] = config.VctrlMax_Y;
-  Vctrl_max_[2] = config.VctrlMax_Yaw;
+  param_max_velocity_[0] = config.VctrlMax_X;
+  param_max_velocity_[1] = config.VctrlMax_Y;
+  param_max_velocity_[2] = config.VctrlMax_Yaw;
 
-  Tdiff_max_[0] = config.TdiffMax_X;
-  Tdiff_max_[1] = config.TdiffMax_Y;
-  Tdiff_max_[2] = config.TdiffMax_Yaw;
+  param_max_thrust_deviation_[0] = config.TdiffMax_X;
+  param_max_thrust_deviation_[1] = config.TdiffMax_Y;
+  param_max_thrust_deviation_[2] = config.TdiffMax_Yaw;
 
-  Pgain_[0] = config.PGain_X;
-  Pgain_[1] = config.PGain_Y;
-  Pgain_[2] = config.PGain_Yaw;
+  param_p_gain_[0] = config.PGain_X;
+  param_p_gain_[1] = config.PGain_Y;
+  param_p_gain_[2] = config.PGain_Yaw;
   mtx_.unlock();
 }
 
@@ -109,9 +109,9 @@ void VelocityController::update_thrust()
   mtx_.lock();
   for(cnt=0; cnt<3; cnt++)
   {
-	Vctrl_max[cnt] = Vctrl_max_[cnt];
-	Tdiff_max[cnt] = Tdiff_max_[cnt];
-	Pgain[cnt] = Pgain_[cnt];
+	Vctrl_max[cnt] = param_max_velocity_[cnt];
+	Tdiff_max[cnt] = param_max_thrust_deviation_[cnt];
+	Pgain[cnt] = param_p_gain_[cnt];
   }
   mtx_.unlock();
   
@@ -119,7 +119,7 @@ void VelocityController::update_thrust()
   mtx_.lock();
   for(cnt=0; cnt<3; cnt++)
   {
-	Vdiff[cnt] = veltarg_[cnt] - velcurr_[cnt];
+	Vdiff[cnt] = target_velocity_[cnt] - current_velocity_[cnt];
   }
   mtx_.unlock();
   ROS_INFO("Vel-DEV  X:%.3lf  Y:%.3lf  YAW:%.3lf", Vdiff[0], Vdiff[1], Vdiff[2]);
@@ -145,24 +145,24 @@ void VelocityController::update_thrust()
   ROS_INFO("Vel-DEV(STD,CAP)  X:%.6lf  Y:%.6lf  YAW:%.6lf", Vdiff_idx[0], Vdiff_idx[1], Vdiff_idx[2]);
 
   /* -3- Calculate Base Thrust */
-  Tbase_ =  Tbase_ + Pgain[0] * Vdiff_idx[0];
-  if(Tbase_ > 1.0)
+  base_thrust_ =  base_thrust_ + Pgain[0] * Vdiff_idx[0];
+  if(base_thrust_ > 1.0)
   {
-	Tbase_ = 1.0;
+	base_thrust_ = 1.0;
   }
-  else if(Tbase_ < -1.0)
+  else if(base_thrust_ < -1.0)
   {
-	Tbase_ = -1.0;
+	base_thrust_ = -1.0;
   }
   else
   {
 	/*DO NOTHING*/
   }
-  ROS_INFO("Base Thrust: %.3lf", Tbase_);
+  ROS_INFO("Base Thrust: %.3lf", base_thrust_);
 	
   /* -4- Calculate Differential Thrust */
-  T_Left = Tbase_ + Pgain[2] * (Vdiff_idx[2] / 2);
-  T_Right = Tbase_ - Pgain[2] * (Vdiff_idx[2] / 2);
+  T_Left = base_thrust_ + Pgain[2] * (Vdiff_idx[2] / 2);
+  T_Right = base_thrust_ - Pgain[2] * (Vdiff_idx[2] / 2);
   ROS_INFO("Thrust(RAW): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
   
   
