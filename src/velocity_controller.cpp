@@ -9,8 +9,8 @@ VelocityController::VelocityController(ros::NodeHandle nh, ros::NodeHandle pnh):
   int cnt = 0;
   
   /*Variables Initializing*/
-  thrust_cmd.command.left_thrust_cmd = 0.0;
-  thrust_cmd.command.right_thrust_cmd = 0.0;
+  thrust_cmd_.command.left_thrust_cmd = 0.0;
+  thrust_cmd_.command.right_thrust_cmd = 0.0;
   for(cnt=0; cnt<3; cnt++)
 	{
 	  target_velocity_[cnt] = 0.0;
@@ -60,8 +60,8 @@ void VelocityController::run()
 void VelocityController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
-  target_velocity_[0] = msg->twist.linear.y;
-  target_velocity_[1] = msg->twist.linear.x;
+  target_velocity_[0] = msg->twist.linear.x;
+  target_velocity_[1] = msg->twist.linear.y;
   target_velocity_[2] = msg->twist.angular.z;
   mtx_.unlock();
   
@@ -70,8 +70,8 @@ void VelocityController::subcb_veltarg(const geometry_msgs::TwistStamped::ConstP
 void VelocityController::subcb_velcurr(const geometry_msgs::TwistStamped::ConstPtr msg)
 {
   mtx_.lock();
-  current_velocity_[0] = msg->twist.linear.y;
-  current_velocity_[1] = msg->twist.linear.x;
+  current_velocity_[0] = msg->twist.linear.x;
+  current_velocity_[1] = msg->twist.linear.y;
   current_velocity_[2] = msg->twist.angular.z;
   mtx_.unlock();
 }
@@ -109,9 +109,9 @@ void VelocityController::update_thrust()
   mtx_.lock();
   for(cnt=0; cnt<3; cnt++)
   {
-	Vctrl_max[cnt] = param_max_velocity_[cnt];
-	Tdiff_max[cnt] = param_max_thrust_deviation_[cnt];
-	Pgain[cnt] = param_p_gain_[cnt];
+    Vctrl_max[cnt] = param_max_velocity_[cnt];
+    Tdiff_max[cnt] = param_max_thrust_deviation_[cnt];
+    Pgain[cnt] = param_p_gain_[cnt];
   }
   mtx_.unlock();
   
@@ -119,7 +119,7 @@ void VelocityController::update_thrust()
   mtx_.lock();
   for(cnt=0; cnt<3; cnt++)
   {
-	Vdiff[cnt] = target_velocity_[cnt] - current_velocity_[cnt];
+	  Vdiff[cnt] = target_velocity_[cnt] - current_velocity_[cnt];
   }
   mtx_.unlock();
   ROS_INFO("Vel-DEV  X:%.3lf  Y:%.3lf  YAW:%.3lf", Vdiff[0], Vdiff[1], Vdiff[2]);
@@ -127,20 +127,20 @@ void VelocityController::update_thrust()
   /* -2- Normalize Vdiff */
   for(cnt=0; cnt<3; cnt++)
   {
-	Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
-	ROS_INFO("Vel-DEVIDX  X:%.3lf", Vdiff_idx[cnt]);	
-	if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
-	{
-	  Vdiff_idx[cnt] = Tdiff_max[cnt];
-	}
-	else if( Vdiff_idx[cnt] < -Tdiff_max[cnt] )
-	{
-	  Vdiff_idx[cnt] = -Tdiff_max[cnt];
-	}
-	else
-	{
-	  /*** DO NOTHING ***/
-	}
+    Vdiff_idx[cnt] = Vdiff[cnt] / Vctrl_max[cnt];
+    ROS_INFO("Vel-DEVIDX  X:%.3lf", Vdiff_idx[cnt]);	
+    if( Vdiff_idx[cnt] > Tdiff_max[cnt] )
+    {
+      Vdiff_idx[cnt] = Tdiff_max[cnt];
+    }
+    else if( Vdiff_idx[cnt] < -Tdiff_max[cnt] )
+    {
+      Vdiff_idx[cnt] = -Tdiff_max[cnt];
+    }
+    else
+    {
+      /*** DO NOTHING ***/
+    }
   }
   ROS_INFO("Vel-DEV(STD,CAP)  X:%.6lf  Y:%.6lf  YAW:%.6lf", Vdiff_idx[0], Vdiff_idx[1], Vdiff_idx[2]);
 
@@ -148,15 +148,11 @@ void VelocityController::update_thrust()
   base_thrust_ =  base_thrust_ + Pgain[0] * Vdiff_idx[0];
   if(base_thrust_ > 1.0)
   {
-	base_thrust_ = 1.0;
+	  base_thrust_ = 1.0;
   }
   else if(base_thrust_ < -1.0)
   {
-	base_thrust_ = -1.0;
-  }
-  else
-  {
-	/*DO NOTHING*/
+	  base_thrust_ = -1.0;
   }
   ROS_INFO("Base Thrust: %.3lf", base_thrust_);
 	
@@ -172,22 +168,22 @@ void VelocityController::update_thrust()
   
   if( T_Left_abs >1.0 || T_Right_abs > 1.0 )
   {
-	if( T_Left_abs > T_Right_abs )
-	{
-	  T_Right = T_Right / T_Left;
-	  T_Left = 1.0;
-	}
-	else
-	{
-	  T_Left = T_Left / T_Right;
-	  T_Right = 1.0;
-	}
+    if( T_Left_abs > T_Right_abs )
+    {
+      T_Right = T_Right / T_Left;
+      T_Left = 1.0;
+    }
+    else
+    {
+      T_Left = T_Left / T_Right;
+      T_Right = 1.0;
+    }
   }
   ROS_INFO("Thrust(FINAL): [LEFT]%.3lf, [RIGHT]%.3lf\n", T_Left, T_Right);
   
   mtx_.lock();
-  thrust_cmd.command.left_thrust_cmd = T_Left;
-  thrust_cmd.command.right_thrust_cmd = T_Right;
+  thrust_cmd_.command.left_thrust_cmd = T_Left;
+  thrust_cmd_.command.right_thrust_cmd = T_Right;
   mtx_.unlock();
   
 }
@@ -196,8 +192,8 @@ void VelocityController::update_thrust()
 void VelocityController::publish_thrust()
 {
   mtx_.lock();
-  thrust_cmd.header.frame_id = robot_frame_;
-  thrust_cmd.header.stamp = ros::Time::now();
-  thrust_pub_.publish(thrust_cmd);
+  thrust_cmd_.header.frame_id = robot_frame_;
+  thrust_cmd_.header.stamp = ros::Time::now();
+  thrust_pub_.publish(thrust_cmd_);
   mtx_.unlock();
 }

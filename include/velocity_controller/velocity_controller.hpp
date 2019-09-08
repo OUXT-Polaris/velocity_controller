@@ -39,7 +39,7 @@ private:
   double param_max_velocity_[3]; /* [u, v, r] m/s : Max Speeds of the ship*/
   double param_max_thrust_deviation_[3]; /* [u, v, r] % : Max gradient of Speeds*/
   double param_p_gain_[3]; /* [u, v, r] m/s : Parameter of control gain (Proportional) */
-  usv_control_msgs::AzimuthThrusterCatamaranDriveStamped thrust_cmd;
+  usv_control_msgs::AzimuthThrusterCatamaranDriveStamped thrust_cmd_;
   
   /*Parameters*/
   std::string sub_topicname_target_velocity_;
