@@ -113,15 +113,12 @@ void VelocityController::update_thrust()
     Tdiff_max[cnt] = param_max_thrust_deviation_[cnt];
     Pgain[cnt] = param_p_gain_[cnt];
   }
-  mtx_.unlock();
   
   /* -1- Getting Current Velocity Status */
-  mtx_.lock();
   for(cnt=0; cnt<3; cnt++)
   {
 	  Vdiff[cnt] = target_velocity_[cnt] - current_velocity_[cnt];
   }
-  mtx_.unlock();
   ROS_INFO("Vel-DEV  X:%.3lf  Y:%.3lf  YAW:%.3lf", Vdiff[0], Vdiff[1], Vdiff[2]);
   
   /* -2- Normalize Vdiff */
@@ -136,10 +133,6 @@ void VelocityController::update_thrust()
     else if( Vdiff_idx[cnt] < -Tdiff_max[cnt] )
     {
       Vdiff_idx[cnt] = -Tdiff_max[cnt];
-    }
-    else
-    {
-      /*** DO NOTHING ***/
     }
   }
   ROS_INFO("Vel-DEV(STD,CAP)  X:%.6lf  Y:%.6lf  YAW:%.6lf", Vdiff_idx[0], Vdiff_idx[1], Vdiff_idx[2]);
@@ -181,7 +174,6 @@ void VelocityController::update_thrust()
   }
   ROS_INFO("Thrust(FINAL): [LEFT]%.3lf, [RIGHT]%.3lf\n", T_Left, T_Right);
   
-  mtx_.lock();
   thrust_cmd_.command.left_thrust_cmd = T_Left;
   thrust_cmd_.command.right_thrust_cmd = T_Right;
   mtx_.unlock();

@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   )
 
 ###Dynamic Reconfigure###
-generate_dynamic_reconfigure_options(cfg/velocity_controller_configure.cfg)
+generate_dynamic_reconfigure_options(cfg/ControlParam.cfg)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -28,7 +28,7 @@ include_directories(
 
 add_executable(velocity_controller_node src/velocity_controller.cpp src/velocity_controller_node.cpp)
 target_link_libraries(velocity_controller_node ${catkin_LIBRARIES})
-add_dependencies(velocity_controller_node ${catkin_EXPORTED_TARGETS} velocity_controller_node_gencfg)
+add_dependencies(velocity_controller_node ${catkin_EXPORTED_TARGETS})
 
 install(TARGETS
   velocity_controller_node
