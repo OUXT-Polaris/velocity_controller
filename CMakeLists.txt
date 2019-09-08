@@ -28,7 +28,7 @@ include_directories(
 
 add_executable(velocity_controller_node src/velocity_controller.cpp src/velocity_controller_node.cpp)
 target_link_libraries(velocity_controller_node ${catkin_LIBRARIES})
-add_dependencies(velocity_controller_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(velocity_controller_node ${catkin_EXPORTED_TARGETS} velocity_controller_node_gencfg)
 
 install(TARGETS
   velocity_controller_node
