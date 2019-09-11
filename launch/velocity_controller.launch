@@ -5,7 +5,7 @@
     <arg name="current_velocity_topic" default="/pose_to_twist/current_twist"/>
     <arg name="robot_frame" default="base_link"/>
 
-    <node pkg="velocity_controller" type="vel_controller_node" name="velocity_controller_node" output="log" respawn="false" respawn_delay="0">
+    <node pkg="velocity_controller" type="velocity_controller_node" name="velocity_controller_node" output="log" respawn="false" respawn_delay="0">
         <param name="target_velocity" value="$(arg target_velocity_topic)"/>
         <param name="thrust_command" value="$(arg control_command_topic)"/>
         <param name="current_velocity" value="$(arg current_velocity_topic)"/>
