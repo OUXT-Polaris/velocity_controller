@@ -84,6 +84,7 @@ void VelocityController::reconf_cbfunc(velocity_controller::ControlParamConfig &
   param_max_velocity_y_ = config.VctrlMax_Y;
   param_max_velocity_yaw_ = config.VctrlMax_Yaw;
   param_max_thrust_deviation_ = config.TdiffMax;
+  param_rotation_effect_ = config.RotEffect;
   param_p_gain_y_ = config.PGain_Y;
   param_p_gain_yaw_ = config.PGain_Yaw;
   param_i_gain_y_ = config.IGain_Y;
@@ -107,6 +108,7 @@ void VelocityController::update_thrust()
   double velocity_difference_y = 0.0;
   double velocity_difference_yaw = 0.0;
   double max_thrust = 0.0;
+  double rotation_effect = 0.0;
   double T_Left = 0.0;
   double T_Right = 0.0;
   double T_Left_abs = 0.0;
@@ -118,6 +120,7 @@ void VelocityController::update_thrust()
   max_velocity_y = param_max_velocity_y_;
   max_velocity_yaw = param_max_velocity_yaw_;
   max_thrust_deviation = param_max_thrust_deviation_;
+  rotation_effect = param_rotation_effect_;
   p_gain_y = param_p_gain_y_;
   p_gain_yaw = param_p_gain_yaw_;
   i_gain_y = param_i_gain_y_;
@@ -138,8 +141,8 @@ void VelocityController::update_thrust()
 
   
   /* -3- Calculate Left and Right Thrust */
-  T_Left = base_thrust_ * (1 - rotation_thrust_);
-  T_Right = base_thrust_ * (1 + rotation_thrust_);
+  T_Left = base_thrust_ - (base_thrust_ + rotation_effect)*rotation_thrust_;
+  T_Right = base_thrust_ + (base_thrust_ + rotation_effect)*rotation_thrust_;
   ROS_INFO("Thrust(RAW): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
   
   /* -4- Normalize Thrust */

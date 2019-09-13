@@ -51,6 +51,7 @@ private:
   double param_max_velocity_y_; /* Max velocity of Y-Axis */
   double param_max_velocity_yaw_; /* Max angular velocity of Yaw */
   double param_max_thrust_deviation_; /* Amount of deviation of changing output in each Step */
+  double param_rotation_effect_;
   double param_p_gain_y_; /* Proportional Gain of Y-Axis*/
   double param_p_gain_yaw_; /* Proportional Gain of Yaw*/
   double param_i_gain_y_; /* Integral Gain of Y-Axis*/
