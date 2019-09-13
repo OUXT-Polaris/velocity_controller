@@ -1,4 +1,3 @@
-ls
 // Headers in this package
 #include <velocity_controller/velocity_controller.hpp>
 #include <boost/bind.hpp>
@@ -6,17 +5,14 @@ ls
 VelocityController::VelocityController(ros::NodeHandle nh, ros::NodeHandle pnh):
   nh_(nh),
   pnh_(pnh)
-{
-  int cnt = 0;
-  
+{ 
   /*Variables Initializing*/
   thrust_cmd_.command.left_thrust_cmd = 0.0;
   thrust_cmd_.command.right_thrust_cmd = 0.0;
-  for(cnt=0; cnt<3; cnt++)
-	{
-	  target_velocity_[cnt] = 0.0;
-	  current_velocity_[cnt] = 0.0;
-	}
+  target_velocity_y_ = 0.0;
+  target_velocity_yaw_ = 0.0;
+  current_velocity_y_ = 0.0;
+  current_velocity_yaw_ = 0.0;
   velocity_difference_y_old = 0.0;
   velocity_difference_yaw_old = 0.0;
   thrust_left_old_ = 0.0;
@@ -88,9 +84,9 @@ void VelocityController::reconf_cbfunc(velocity_controller::ControlParamConfig &
   param_max_velocity_y_ = config.VctrlMax_Y;
   param_max_velocity_yaw_ = config.VctrlMax_Yaw;
   param_max_thrust_deviation_ = config.TdiffMax;
-  param_p_gain_y_ = config.PGain_X;
+  param_p_gain_y_ = config.PGain_Y;
   param_p_gain_yaw_ = config.PGain_Yaw;
-  param_i_gain_y_ = config.IGain_X;
+  param_i_gain_y_ = config.IGain_Y;
   param_i_gain_yaw_ = config.IGain_Yaw;
   mtx_.unlock();
 }
@@ -116,13 +112,12 @@ void VelocityController::update_thrust()
   double T_Left_abs = 0.0;
   double T_Right_abs = 0.0;
 
-
   
   /* -0- Getting Parameters */
   mtx_.lock();
   max_velocity_y = param_max_velocity_y_;
   max_velocity_yaw = param_max_velocity_yaw_;
-  max_thrust_deviation = param_max_thrust_deviation;
+  max_thrust_deviation = param_max_thrust_deviation_;
   p_gain_y = param_p_gain_y_;
   p_gain_yaw = param_p_gain_yaw_;
   i_gain_y = param_i_gain_y_;
@@ -143,8 +138,8 @@ void VelocityController::update_thrust()
 
   
   /* -3- Calculate Left and Right Thrust */
-  T_Left = base_thrust_ - rotation_thrust;
-  T_Right = base_thrust_ + rotation_thrust;
+  T_Left = base_thrust_ - rotation_thrust_;
+  T_Right = base_thrust_ + rotation_thrust_;
   ROS_INFO("Thrust(RAW): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
   
   /* -4- Normalize Thrust */
@@ -153,60 +148,89 @@ void VelocityController::update_thrust()
 	+p_gain_yaw * max_velocity_yaw + i_gain_yaw * max_velocity_yaw;
   T_Left /= max_thrust;
   T_Right /= max_thrust;
-
+  
   T_Left_abs = std::abs(T_Left);
   T_Right_abs = std::abs(T_Right);  
-  if( T_Left_abs >1.0 || T_Right_abs > 1.0 )
+  if( T_Left_abs >= T_Right_abs )
   {
-    if( T_Left_abs > T_Right_abs )
+    if( T_Left > 1.0 )
     {
-      T_Right = T_Right / T_Left;
+      T_Right = T_Right / T_Left_abs;
       T_Left = 1.0;
     }
-    else
+    else if( T_Left < -1.0 )
     {
-      T_Left = T_Left / T_Right;
-      T_Right = 1.0;
+      T_Right = T_Right / T_Left_abs;
+      T_Left = -1.0;
     }
-  }
-  ROS_INFO("Thrust(Norm): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
-  
-
-  /* -5- Limit Thrust change */
-  //Left
-  if( T_Left - thrust_left_old > max_thrust_deviation;)
-  {
-	T_Left = thrust_left_old + max_thrust_deviation;
+	else
+	{
+	  /*DO NOTHING*/
+	}
   }
   else
   {
-	T_Left = thrust_left_old + T_Left;
+	if( T_Right > 1.0 )
+    {
+      T_Left = T_Left / T_Right_abs;
+      T_Right = 1.0;
+    }
+    else if( T_Right < -1.0 )
+    {
+      T_Left = T_Left / T_Right_abs;
+      T_Right = -1.0;
+    }
+	else
+	{
+	  /*DO NOTHING*/
+	}
+  }
+  ROS_INFO("Thrust(Norm): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
+
+  
+  /* -5- Limit Thrust change */
+  //Left
+  if( T_Left - thrust_left_old_ > max_thrust_deviation )
+  {
+	T_Left = thrust_left_old_ + max_thrust_deviation;
+  }
+  else if( T_Left - thrust_left_old_ < -max_thrust_deviation )
+  {
+	T_Left = thrust_left_old_ - max_thrust_deviation;	
+  }
+  else
+  {
+	/*DO NOTHING*/
   }
 
   //Right
-  if( T_Right - thrust_right_old > max_thrust_deviation;)
+  if( T_Right - thrust_right_old_ > max_thrust_deviation)
   {
-	T_Right = thrust_right_old + max_thrust_deviation;
+	T_Right = thrust_right_old_ + max_thrust_deviation;
+  }
+  else if( T_Right - thrust_right_old_ < -max_thrust_deviation )
+  {
+	T_Right = thrust_right_old_ - max_thrust_deviation;	
   }
   else
   {
-	T_Right = thrust_right_old + T_Right;
+	/*DO NOTHING*/
   }
   ROS_INFO("Thrust(FINAL): [LEFT]%.3lf, [RIGHT]%.3lf\n", T_Left, T_Right);
 
-
-  /* -6- Send Thruster Topic */
-  mtx_lock();
+  
+  /* -7- Send Thruster Topic */
+  mtx_.lock();
   thrust_cmd_.command.left_thrust_cmd = T_Left;
   thrust_cmd_.command.right_thrust_cmd = T_Right;
   mtx_.unlock();
 
 
-  /* -7- Refresh Old Values */
-  velocity_difference_y_old = velocity_difference_y; 
-  velocity_difference_yaw_old = velocity_difference_yaw;
+  /* -8- Refresh Old Values */
   thrust_left_old_ = T_Left;
   thrust_right_old_ = T_Right;
+  velocity_difference_y_old = velocity_difference_y; 
+  velocity_difference_yaw_old = velocity_difference_yaw;
   
 }
 

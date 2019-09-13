@@ -48,8 +48,8 @@ private:
   double param_max_thrust_deviation_; /* [u, v, r] % : Max gradient of Speeds*/
   double param_p_gain_y_; /* [u, v, r] m/s : Parameter of control gain (Proportional) */
   double param_p_gain_yaw_;
-  double param_i_gain_y;
-  double param_i_gain_yaw;
+  double param_i_gain_y_;
+  double param_i_gain_yaw_;
   usv_control_msgs::AzimuthThrusterCatamaranDriveStamped thrust_cmd_;
   
   /*Parameters*/
