@@ -138,8 +138,8 @@ void VelocityController::update_thrust()
 
   
   /* -3- Calculate Left and Right Thrust */
-  T_Left = base_thrust_ - rotation_thrust_;
-  T_Right = base_thrust_ + rotation_thrust_;
+  T_Left = base_thrust_ * (1 - rotation_thrust_);
+  T_Right = base_thrust_ * (1 + rotation_thrust_);
   ROS_INFO("Thrust(RAW): [LEFT]%.3lf, [RIGHT]%.3lf", T_Left, T_Right);
   
   /* -4- Normalize Thrust */
