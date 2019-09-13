@@ -33,26 +33,31 @@ private:
   
   
   /*Member Variables*/
-  double target_velocity_y_; /* [u, v, r] m/s*/
-  double target_velocity_yaw_; /* [u, v, r] m/s*/
-  double current_velocity_y_; /* [u, v, r] m/s*/
-  double current_velocity_yaw_; /* [u, v, r] m/s*/
-  double velocity_difference_y_old;
-  double velocity_difference_yaw_old;
-  double thrust_left_old_;
-  double thrust_right_old_;
-  double base_thrust_;
-  double rotation_thrust_;
-  double param_max_velocity_y_; /* [u, v, r] m/s : Max Speeds of the ship*/
-  double param_max_velocity_yaw_; /* [u, v, r] m/s : Max Speeds of the ship*/
-  double param_max_thrust_deviation_; /* [u, v, r] % : Max gradient of Speeds*/
-  double param_p_gain_y_; /* [u, v, r] m/s : Parameter of control gain (Proportional) */
-  double param_p_gain_yaw_;
-  double param_i_gain_y_;
-  double param_i_gain_yaw_;
+  //Input
+  double target_velocity_y_; /* Target velocity of Y-Axis m/s*/
+  double target_velocity_yaw_; /* Target angular velocity of Yaw rad/s*/
+  double current_velocity_y_; /* Current Velocity of Y-Axis m/s*/
+  double current_velocity_yaw_; /* Current angular velocity of Yaw rad/s*/
+  
+  //Temporary Variables
+  double velocity_difference_y_old; /*e_y*/
+  double velocity_difference_yaw_old; /*e_yaw*/
+  double thrust_left_old_; /*T_l*/
+  double thrust_right_old_; /*T_r*/
+  double base_thrust_; /*dT_b*/
+  double rotation_thrust_; /*dT_t*/
+
+  //Storage Variables used in Call Back Function
+  double param_max_velocity_y_; /* Max velocity of Y-Axis */
+  double param_max_velocity_yaw_; /* Max angular velocity of Yaw */
+  double param_max_thrust_deviation_; /* Amount of deviation of changing output in each Step */
+  double param_p_gain_y_; /* Proportional Gain of Y-Axis*/
+  double param_p_gain_yaw_; /* Proportional Gain of Yaw*/
+  double param_i_gain_y_; /* Integral Gain of Y-Axis*/
+  double param_i_gain_yaw_; /* Integral Gain of Yaw*/
   usv_control_msgs::AzimuthThrusterCatamaranDriveStamped thrust_cmd_;
   
-  /*Parameters*/
+  /*Parameters of this class*/
   std::string sub_topicname_target_velocity_;
   std::string sub_topicname_current_velocity_;
   std::string pub_topicname_thrust_;

@@ -219,14 +219,14 @@ void VelocityController::update_thrust()
   ROS_INFO("Thrust(FINAL): [LEFT]%.3lf, [RIGHT]%.3lf\n", T_Left, T_Right);
 
   
-  /* -7- Send Thruster Topic */
+  /* -6- Send Thruster Topic */
   mtx_.lock();
   thrust_cmd_.command.left_thrust_cmd = T_Left;
   thrust_cmd_.command.right_thrust_cmd = T_Right;
   mtx_.unlock();
 
 
-  /* -8- Refresh Old Values */
+  /* -7- Refresh Old Values */
   thrust_left_old_ = T_Left;
   thrust_right_old_ = T_Right;
   velocity_difference_y_old = velocity_difference_y; 
